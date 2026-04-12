@@ -67,12 +67,8 @@ export const SESSIONS = [
   },
 ]
 
-// Réservations de démonstration
-export const DEMO_BOOKINGS = [
-  { id: 'b1', name: 'jacques Martin', sessionId: 'sat-cours-1', dateLabel: fmt(satDisplay), time: '10:00 - 11:30', price: 11.5, whatsapp: '' },
-  { id: 'b2', name: 'Alban Peytavin', sessionId: 'sat-cours-1', dateLabel: fmt(satDisplay), time: '10:00 - 11:30', price: 11.5, whatsapp: '' },
-  { id: 'b3', name: 'Yannick BEAUVILLAIN', sessionId: 'sat-cours-1', dateLabel: fmt(satDisplay), time: '10:00 - 11:30', price: 11.5, whatsapp: '' },
-]
+// Réservations
+export const DEMO_BOOKINGS = []
 
 export const COURT = {
   name: 'The Padelist Achrafieh',
