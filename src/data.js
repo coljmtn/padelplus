@@ -51,7 +51,7 @@ export const SESSIONS = [
     description: 'Session technique sur le Court Panoramique.',
     price: 11.5,
     totalSpots: 4,
-    bookedCount: 1,
+    bookedCount: 0,
   },
   {
     id: 'sat-cours-2',
