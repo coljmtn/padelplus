@@ -1,7 +1,10 @@
-// App.jsx — Routeur principal avec support mobile complet
-
 import { useState, useEffect } from 'react'
-import { SESSIONS, DEMO_BOOKINGS } from './data.js'
+import {
+  collection, onSnapshot, addDoc, deleteDoc,
+  doc, setDoc, getDoc, serverTimestamp
+} from 'firebase/firestore'
+import { db } from './firebase.js'
+import { SESSIONS } from './data.js'
 import Navbar from './components/Navbar.jsx'
 import TerrainsView from './components/TerrainsView.jsx'
 import GuideView from './components/GuideView.jsx'
@@ -12,9 +15,27 @@ import BookingModal from './components/BookingModal.jsx'
 export default function App() {
   const [view, setView] = useState('terrains')
   const [sessions, setSessions] = useState(() => SESSIONS.map(s => ({ ...s })))
-  const [bookings, setBookings] = useState(() => DEMO_BOOKINGS.map(b => ({ ...b })))
+  const [bookings, setBookings] = useState([])
   const [bookingModal, setBookingModal] = useState(null)
   const [toast, setToast] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // ── Écoute temps réel des réservations Firestore ──────────────────────────
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'bookings'), snapshot => {
+      const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+      setBookings(data)
+
+      // Recalculer les compteurs de places depuis Firestore
+      setSessions(SESSIONS.map(s => ({
+        ...s,
+        bookedCount: data.filter(b => b.sessionId === s.id).length
+      })))
+
+      setLoading(false)
+    })
+    return () => unsub()
+  }, [])
 
   // Fermeture modale par Escape
   useEffect(() => {
@@ -30,36 +51,47 @@ export default function App() {
     return () => clearTimeout(t)
   }, [toast])
 
-  function handleBook(session, name, whatsapp) {
-    const newBooking = {
-      id: 'b' + Date.now(),
-      name,
-      whatsapp,
-      sessionId: session.id,
-      dateLabel: session.dateLabel,
-      time: session.time,
-      price: session.price,
+  // ── Créer une réservation dans Firestore ──────────────────────────────────
+  async function handleBook(session, name, whatsapp) {
+    try {
+      await addDoc(collection(db, 'bookings'), {
+        name,
+        whatsapp,
+        sessionId: session.id,
+        sessionTitle: session.title,
+        dateLabel: session.dateLabel,
+        time: session.time,
+        price: session.price,
+        createdAt: serverTimestamp(),
+      })
+      setBookingModal(null)
+      setView('reservations')
+    } catch (err) {
+      console.error('Erreur réservation:', err)
+      setToast('❌ Erreur lors de la réservation. Réessayez.')
     }
-    setBookings(prev => [...prev, newBooking])
-    setSessions(prev =>
-      prev.map(s =>
-        s.id === session.id ? { ...s, bookedCount: s.bookedCount + 1 } : s
-      )
-    )
-    // On ne ferme PAS le modal ici — BookingModal affiche l'écran de succès
-    setView('reservations')
   }
 
-  function handleCancel(bookingId) {
-    const b = bookings.find(b => b.id === bookingId)
-    if (!b) return
-    setBookings(prev => prev.filter(x => x.id !== bookingId))
-    setSessions(prev =>
-      prev.map(s =>
-        s.id === b.sessionId ? { ...s, bookedCount: Math.max(0, s.bookedCount - 1) } : s
-      )
+  // ── Annuler une réservation dans Firestore ────────────────────────────────
+  async function handleCancel(bookingId) {
+    try {
+      await deleteDoc(doc(db, 'bookings', bookingId))
+      setToast('❌ Réservation annulée.')
+    } catch (err) {
+      console.error('Erreur annulation:', err)
+      setToast('❌ Erreur lors de l\'annulation.')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-4xl mb-3">🎾</div>
+          <p className="text-gray-500 text-sm">Chargement...</p>
+        </div>
+      </div>
     )
-    setToast('❌ Réservation annulée.')
   }
 
   return (
@@ -83,7 +115,6 @@ export default function App() {
             onCancel={handleCancel}
             onNewBooking={() => {
               setView('terrains')
-              // Petit délai pour ouvrir le modal après la navigation
               setTimeout(() => setBookingModal(sessions[0]), 50)
             }}
           />
@@ -97,7 +128,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Modal de réservation */}
       {bookingModal && (
         <BookingModal
           session={bookingModal}
@@ -107,7 +137,6 @@ export default function App() {
         />
       )}
 
-      {/* Toast */}
       {toast && (
         <div
           className="fixed left-1/2 -translate-x-1/2 z-50 animate-slideUp"
@@ -119,7 +148,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Footer — caché sur mobile (remplacé par bottom bar) */}
       <footer className="hidden sm:block text-center text-xs text-gray-400 py-5 border-t border-gray-100">
         © 2025 PadelPlus 🇱🇧. Beyrouth, Achrafieh.
       </footer>
