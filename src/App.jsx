@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   collection, onSnapshot, addDoc, deleteDoc,
-  doc, setDoc, getDoc, serverTimestamp
+  doc, serverTimestamp
 } from 'firebase/firestore'
 import { db } from './firebase.js'
 import { SESSIONS } from './data.js'
@@ -26,10 +26,18 @@ export default function App() {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
       setBookings(data)
 
-      // Recalculer les compteurs de places depuis Firestore
+      // Recalculer les compteurs — uniquement les réservations à venir
+      // On compare la date ISO de la session avec aujourd'hui (minuit)
+      const todayMidnight = new Date()
+      todayMidnight.setHours(0, 0, 0, 0)
+
       setSessions(SESSIONS.map(s => ({
         ...s,
-        bookedCount: data.filter(b => b.sessionId === s.id).length
+        bookedCount: data.filter(b =>
+          b.sessionId === s.id &&
+          b.sessionDate &&
+          new Date(b.sessionDate) >= todayMidnight
+        ).length
       })))
 
       setLoading(false)
@@ -54,11 +62,17 @@ export default function App() {
   // ── Créer une réservation dans Firestore ──────────────────────────────────
   async function handleBook(session, name, whatsapp) {
     try {
+      // sessionDate stockée en ISO (YYYY-MM-DD) pour filtrage par date
+      const sessionDate = session.dateObj instanceof Date
+        ? session.dateObj.toISOString().split('T')[0]
+        : new Date(session.dateObj).toISOString().split('T')[0]
+
       await addDoc(collection(db, 'bookings'), {
         name,
         whatsapp,
         sessionId: session.id,
         sessionTitle: session.title,
+        sessionDate,           // ← date ISO de la session (ex: "2026-04-19")
         dateLabel: session.dateLabel,
         time: session.time,
         price: session.price,
