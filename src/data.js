@@ -8,22 +8,17 @@ function nextWeekday(dayIndex) {
   d.setDate(today.getDate() + diff)
   return d
 }
-
 function fmt(date) {
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
 }
-
 function fmtShort(date) {
   return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase()
 }
-
 const thursdayDate = nextWeekday(4) // jeudi
 const saturdayDate = nextWeekday(6) // samedi
-
-// Règle métier : après jeudi 20h → sessions samedi basculent semaine suivante
+// Règle métier : après jeudi 20h → session samedi bascule semaine suivante
 const now = new Date()
 const isSaturdayClosed = now.getDay() === 4 && now.getHours() >= 20
-
 const satDisplay = isSaturdayClosed
   ? (() => { const d = new Date(saturdayDate); d.setDate(d.getDate() + 7); return d })()
   : saturdayDate
@@ -36,57 +31,40 @@ export const SESSIONS = [
     dateObj: thursdayDate,
     time: '10:00 - 11:00',
     title: 'Cours Jeudi (1h)',
-    description: 'Session technique limitée à 4 joueurs.',
+    description: 'Session technique limitée à 4 joueurs. Les tarifs peuvent varier en présence d\'un coach.',
     price: 7.5,
     totalSpots: 4,
     bookedCount: 0,
   },
   {
-    id: 'sat-cours-1',
-    day: 'SAMEDI',
-    dateLabel: fmtShort(satDisplay),
-    dateObj: satDisplay,
-    time: '10:00 - 11:30',
-    title: 'Cours N°1 (1h30)',
-    description: 'Session technique sur le Court Panoramique.',
-    price: 11.5,
-    totalSpots: 4,
-    bookedCount: 0,
-  },
-  {
-    id: 'sat-cours-2',
+    id: 'sat-cours',
     day: 'SAMEDI',
     dateLabel: fmtShort(satDisplay),
     dateObj: satDisplay,
     time: '10:00 - 11:00',
-    title: 'Cours N°2 (1h)',
-    description: 'Session de jeu sur le Court N°2.',
+    title: 'Cours Samedi (1h)',
+    description: 'Session technique limitée à 4 joueurs. Les tarifs peuvent varier en présence d\'un coach.',
     price: 7.5,
     totalSpots: 4,
     bookedCount: 0,
   },
 ]
-
 // Réservations
 export const DEMO_BOOKINGS = []
-
 export const COURT = {
   name: 'The Padelist Achrafieh',
   subtitle: 'Achrafieh High-End',
   badge: 'Panoramique',
   feature: 'Tapis WPT',
   rating: 5,
-  priceRange: '7.5-12$ / Pers',
+  priceRange: '7.5$ / Pers',
   image: '/padel.jpg',
 }
-
 export const GUIDE_STEPS = [
   { num: '01', title: 'Choix du Terrain', desc: "Sélectionnez 'The Padelist Achrafieh'." },
-  { num: '02', title: 'Session & Court', desc: 'Choisissez entre le Jeudi (1h) ou le Court N°1 (1h30) / N°2 (1h) le samedi.' },
+  { num: '02', title: 'Session & Court', desc: 'Choisissez entre le cours du Jeudi (1h) ou du Samedi (1h).' },
   { num: '03', title: 'WhatsApp', desc: 'Indispensable pour recevoir les infos du match.' },
   { num: '04', title: 'Confirmation', desc: 'Annulation possible via votre compte.' },
 ]
-
-export const GUIDE_TRANSCRIPT = `"Bienvenue sur PadelPlus ! Pour réserver, choisissez votre session : le Jeudi pour un cours d'1h à 7.5$, ou le Samedi avec le Court N°1 (1h30) ou le Court N°2 (1h). Notez que pour le samedi, les réservations basculent sur la semaine suivante dès le jeudi soir. Entrez votre nom et votre WhatsApp, confirmez, et retrouvez votre reçu dans l'onglet 'Réservations'. À bientôt sur le court !"`
-
+export const GUIDE_TRANSCRIPT = `"Bienvenue sur PadelPlus ! Pour réserver, choisissez votre session : le Jeudi ou le Samedi, de 10h à 11h, à 7.5$ par personne. Les tarifs peuvent varier en présence d'un coach. Notez que pour le samedi, les réservations basculent sur la semaine suivante dès le jeudi soir. Entrez votre nom et votre WhatsApp, confirmez, et retrouvez votre reçu dans l'onglet 'Réservations'. À bientôt sur le court !"`
 export const ADMIN_PIN = '1234'
